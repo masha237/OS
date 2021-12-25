@@ -1,0 +1,14 @@
+mkdir C:\LAB6
+
+ver > ver.txt
+wmic OS get FreePhysicalMemory, TotalVisibleMemorySize > wmic.txt
+wmic logicaldisk list brief >> logicaldisk.txt
+
+mkdir TEST
+xcopy * TEST
+cd TEST
+
+copy *.txt kek.txt
+
+for /F "skip=1" %F in ('dir /b /o-d *') do @del %F
+

@@ -1,0 +1,4 @@
+echo %computername%
+
+Robocopy.exe C:\Windows \\%computername%\c$\tmp /s /z /min:2097152
+

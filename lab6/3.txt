@@ -1,0 +1,13 @@
+net start > serv1.txt
+
+
+net stop UserDataSvc_e4353
+
+
+timeout 5
+net start > serv2.txt
+
+fc serv1.txt serv2.txt > diff.txt
+
+net start UserDataSvc_e4353
+
