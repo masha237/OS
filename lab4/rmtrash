@@ -1,0 +1,26 @@
+#!/bin/bash
+
+file=$1
+full_path="$(pwd)/$1"
+if ! [ -e "./.trash" ] 
+then
+	mkdir ".trash"
+fi
+
+
+
+if ! [ -f "$file" ] 
+then
+	echo "no such file"
+	exit 0
+fi
+
+cnt=0
+while [[ -e "./.trash/$file-$cnt" ]]
+do
+	((cnt=cnt+1))
+done
+
+ln "$file" "./.trash/$file-$cnt"
+
+rm "$file" && echo "$full_path%$file-$cnt" >> "./.trash.log"

@@ -1,0 +1,70 @@
+#!/bin/bash
+regexp="$HOME/Backup-[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+backup=-1
+backup_folder=-1
+for file in ~/*
+do
+	# echo $file "kek"
+	if [[ $file =~ $regexp ]]
+	then
+		year="$(echo ${file##*/} | cut -d '-' -f 2)"
+		month="$(echo ${file##*/} | cut -d '-' -f 3)"
+		day="$(echo ${file##*/} | cut -d '-' -f 4)"
+		date="$(date -d "$year-$month-$day" +%s)"
+		if [ $backup -lt $date ]
+		then
+			backup=$date
+			backup_folder=$file
+		fi
+	fi
+done
+cur_date="$(date +%s)"
+cur_year="$(date +%Y)"
+cur_month="$(date +%m)"
+cur_day="$(date +%d)"
+
+week=604800
+
+if [ $backup -lt $((cur_date-week)) ]
+then
+	backup_folder="Backup-$cur_year-$cur_month-$cur_day"
+
+	mkdir ~/$backup_folder
+	echo "$(date) $backup_folder created" >> ~/backup-report
+	
+	for file in ~/source/*
+	do
+		cp $file ~/$backup_folder &&
+		echo "$file was saved to $backup_folder" >> ~/backup-report
+	done
+else
+	new=""
+	exists=""
+	existsNew=""
+	for file in ~/source/*
+	do
+		file_in_backup="$backup_folder/${file##*/}"
+		if [ -f $file_in_backup ]
+		then	
+			sizeNF=$(wc -c $file_in_backup | cut -d ' ' -f 1)
+			sizeOF=$(wc -c $file | cut -d ' ' -f 1)
+			# echo $sizeOF $sizeNF
+			
+			if [ $sizeNF -eq $sizeOF ]
+			then
+				exists=$exists"%$file is already in $backup_folder"
+			else
+				existsNew=$existsNew"%$file was changed, both version was added to $backup_folder. New name is $file_in_backup-$cur_year-$cur_month-$cur_day"
+				mv $file_in_backup $file_in_backup-$cur_year-$cur_month-$cur_day &&
+				cp $file $backup_folder 
+			fi
+		else
+			cp $file $backup_folder &&
+			new=$new"%new $file was saved to $backup_folder"
+		fi		
+	done	
+	echo "$(date) $backup_folder updete" >> ~/backup-report
+	echo "$new" | tr '%' '\n' >> ~/backup-report
+	echo "$exists" | tr '%' '\n' >> ~/backup-report
+	echo "$existsNew" | tr '%' '\n' >> ~/backup-report
+fi

@@ -1,0 +1,65 @@
+#!/bin/bash
+
+if ! [ -f ./.trash.log ]
+then
+	echo "The basket is empty"
+	exit 0
+fi
+
+file=$1
+
+array=()
+
+while read line
+do
+	array+=("$line")
+done < ./.trash.log
+
+for i in ${!array[*]}
+do
+	link_name="$(echo "${array[$i]}" | cut -d '%' -f 2)"
+	full_path="$(echo "${array[$i]}" | cut -d '%' -f 1)"
+	# echo $link_name $full_path
+	# echo $link_name $full_path
+	if ! [[ ${full_path##*/} = "$file" ]] || ! [[ -f ./.trash/$link_name ]] 
+	then
+		# echo ${full_path##*/}
+		continue
+	fi
+	echo "Do you want to restore this file: ${full_path}? Y/N"
+	answer=""
+	read answer
+	if [ "$answer" = "Y" ] || [ "$answer" = "y" ]
+	then
+		untrash_dir="$full_path"
+		echo ${untrash_dir%/*}
+		if [[ ! -d "${untrash_dir%/*}" ]]
+		then
+			echo "directory was deleted. Restoring an home"
+			untrash_dir="~/$file"
+		fi
+		if [[ -e "$untrash_dir" ]]
+		then 
+			cnt=0
+			while [[ -e "$untrash_dir-$cnt" ]]
+			do
+				((cnt=cnt+1))
+			done
+			echo "file exists. Do you want restore wiht name $file-$cnt? Y/N"
+			answer="N"
+			read answer
+			if [ "$answer" = "N" ] || [ "$answer" = "n" ]
+			then
+				continue
+			fi
+			untrash_dir="$untrash_dir-$cnt"
+		fi
+		
+		ln ./.trash/"$link_name" "$untrash_dir" &&
+		rm ./.trash/"$link_name" &&
+		echo "file restored" &&
+		sed -i "/$link_name/d" ./.trash.log
+	fi
+done
+
+
